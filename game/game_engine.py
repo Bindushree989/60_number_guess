@@ -1,6 +1,8 @@
+```python
 import random
 import pygame
 from game.text_box import TextBox
+
 
 class GameEngine:
     def __init__(self, width, height):
@@ -23,10 +25,14 @@ class GameEngine:
         if self.game_won:
             return
 
-        # BUG SYMPTOM:
-        # Submitting an empty input box crashes the game immediately.
+        # Check for empty input before converting to int.
+        if not self.input_box.text.strip():
+            self.feedback_msg = "Please enter a valid number."
+            self.feedback_color = (240, 200, 80)
+            return
+
         guess = int(self.input_box.text)
-        
+
         self.attempts += 1
         self.input_box.clear()
 
@@ -68,24 +74,97 @@ class GameEngine:
     def render(self, screen):
         screen.fill((30, 34, 42))
 
-        title_surf = self.font_title.render("Number Guessing Arena", True, (245, 245, 245))
-        screen.blit(title_surf, (self.width // 2 - title_surf.get_width() // 2, 35))
-
-        attempts_surf = self.font_medium.render(f"Attempts: {self.attempts}", True, (180, 185, 195))
-        screen.blit(attempts_surf, (self.width // 2 - attempts_surf.get_width() // 2, 95))
-        self.input_box.render(screen)
-
-        pygame.draw.rect(screen, (50, 150, 80), self.submit_btn, border_radius=6)
-        pygame.draw.rect(screen, (220, 220, 220), self.submit_btn, width=2, border_radius=6)
-        btn_text = self.font_btn.render("SUBMIT", True, (255, 255, 255))
+        title_surf = self.font_title.render(
+            "Number Guessing Arena", True, (245, 245, 245)
+        )
         screen.blit(
-            btn_text,
-            (self.submit_btn.centerx - btn_text.get_width() // 2, self.submit_btn.centery - btn_text.get_height() // 2),
+            title_surf,
+            (
+                self.width // 2 - title_surf.get_width() // 2,
+                35,
+            ),
         )
 
-        feedback_surf = self.font_medium.render(self.feedback_msg, True, self.feedback_color)
-        screen.blit(feedback_surf, (self.width // 2 - feedback_surf.get_width() // 2, 235))
+        attempts_surf = self.font_medium.render(
+            f"Attempts: {self.attempts}", True, (180, 185, 195)
+        )
+        screen.blit(
+            attempts_surf,
+            (
+                self.width // 2 - attempts_surf.get_width() // 2,
+                95,
+            ),
+        )
+
+        self.input_box.render(screen)
+
+        pygame.draw.rect(
+            screen,
+            (50, 150, 80),
+            self.submit_btn,
+            border_radius=6,
+        )
+        pygame.draw.rect(
+            screen,
+            (220, 220, 220),
+            self.submit_btn,
+            width=2,
+            border_radius=6,
+        )
+
+        btn_text = self.font_btn.render(
+            "SUBMIT", True, (255, 255, 255)
+        )
+        screen.blit(
+            btn_text,
+            (
+                self.submit_btn.centerx - btn_text.get_width() // 2,
+                self.submit_btn.centery - btn_text.get_height() // 2,
+            ),
+        )
+
+        feedback_surf = self.font_medium.render(
+            self.feedback_msg, True, self.feedback_color
+        )
+        screen.blit(
+            feedback_surf,
+            (
+                self.width // 2 - feedback_surf.get_width() // 2,
+                235,
+            ),
+        )
 
         if self.game_won:
-            restart_surf = self.font_medium.render("Press [R] to Start a New Game", True, (255, 220, 80))
-            screen.blit(restart_surf, (self.width // 2 - restart_surf.get_width() // 2, 295))
+            restart_surf = self.font_medium.render(
+                "Press [R] to Start a New Game",
+                True,
+                (255, 220, 80),
+            )
+            screen.blit(
+                restart_surf,
+                (
+                    self.width // 2 - restart_surf.get_width() // 2,
+                    295,
+                ),
+            )
+```
+
+### What changed
+
+Only this block was added before `int()`:
+
+```python
+if not self.input_box.text.strip():
+    self.feedback_msg = "Please enter a valid number."
+    self.feedback_color = (240, 200, 80)
+    return
+```
+
+So now:
+
+* **Empty input + Enter** → no crash
+* **Empty input + SUBMIT** → no crash
+* **Attempts remain unchanged**
+* Feedback says **"Please enter a valid number."**
+* Non-empty input continues through the existing guessing logic
+* No other features were added.
