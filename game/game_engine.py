@@ -14,6 +14,8 @@ class GameEngine:
         self.high_bound = 100
 
         self.attempts = 0
+        self.guess_history = []
+
         self.feedback_msg = "Enter a number between 1 and 100"
         self.feedback_color = (220, 220, 220)
         self.game_won = False
@@ -24,6 +26,7 @@ class GameEngine:
         self.font_title = pygame.font.SysFont(None, 42)
         self.font_medium = pygame.font.SysFont(None, 28)
         self.font_btn = pygame.font.SysFont(None, 26)
+        self.font_history = pygame.font.SysFont(None, 24)
 
     def submit_guess(self):
         if self.game_won:
@@ -42,18 +45,32 @@ class GameEngine:
 
         if guess < self.secret_number:
             self.low_bound = guess + 1
+
+            # Store valid guess in history.
+            self.guess_history.append((guess, "TOO LOW"))
+
             self.feedback_msg = f"TOO LOW! (Guess was {guess})"
             self.feedback_color = (80, 160, 240)
 
         elif guess > self.secret_number:
             self.high_bound = guess - 1
+
+            # Store valid guess in history.
+            self.guess_history.append((guess, "TOO HIGH"))
+
             self.feedback_msg = f"TOO HIGH! (Guess was {guess})"
             self.feedback_color = (240, 100, 80)
 
         else:
+            # Store the correct guess in history as well.
+            self.guess_history.append((guess, "CORRECT"))
+
             self.feedback_msg = f"CORRECT! Found in {self.attempts} attempts."
             self.feedback_color = (80, 220, 90)
             self.game_won = True
+
+        # Keep only the last 5 guesses.
+        self.guess_history = self.guess_history[-5:]
 
     def reset(self):
         self.secret_number = random.randint(1, 100)
@@ -62,6 +79,8 @@ class GameEngine:
         self.high_bound = 100
 
         self.attempts = 0
+        self.guess_history = []
+
         self.feedback_msg = "Enter a number between 1 and 100"
         self.feedback_color = (220, 220, 220)
         self.game_won = False
@@ -143,78 +162,5 @@ class GameEngine:
         screen.blit(
             btn_text,
             (
-                self.submit_btn.centerx - btn_text.get_width() // 2,
-                self.submit_btn.centery - btn_text.get_height() // 2,
-            ),
-        )
-
-        feedback_surf = self.font_medium.render(
-            self.feedback_msg, True, self.feedback_color
-        )
-        screen.blit(
-            feedback_surf,
-            (
-                self.width // 2 - feedback_surf.get_width() // 2,
-                235,
-            ),
-        )
-
-        if self.game_won:
-            restart_surf = self.font_medium.render(
-                "Press [R] to Start a New Game",
-                True,
-                (255, 220, 80),
-            )
-            screen.blit(
-                restart_surf,
-                (
-                    self.width // 2 - restart_surf.get_width() // 2,
-                    295,
-                ),
-            )
+                self.submit_btn.centerx - btn_text.ge
 ```
-
-### Task 2 changes
-
-The changes are intentionally small:
-
-* Added:
-
-  ```python
-  self.low_bound = 1
-  self.high_bound = 100
-  ```
-
-* If the guess is too low:
-
-  ```python
-  self.low_bound = guess + 1
-  ```
-
-* If the guess is too high:
-
-  ```python
-  self.high_bound = guess - 1
-  ```
-
-* Added the displayed range:
-
-  ```text
-  Current Possible Range: 24 - 68
-  ```
-
-* `reset()` restores the range to `1 - 100`.
-
-* Empty input is checked **before** `int()`, so it does not increment attempts or change the range.
-
-For example, if the secret number is `68`:
-
-```text
-Initial:       1 - 100
-Guess: 24 LOW  → 25 - 100
-Guess: 80 HIGH → 25 - 79
-Guess: 50 LOW  → 51 - 79
-Guess: 68      → Correct
-```
-
-This keeps the existing functionality intact while adding the dynamic range hint.
