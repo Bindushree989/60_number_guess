@@ -9,6 +9,10 @@ class GameEngine:
         self.width = width
         self.height = height
         self.secret_number = random.randint(1, 100)
+
+        self.low_bound = 1
+        self.high_bound = 100
+
         self.attempts = 0
         self.feedback_msg = "Enter a number between 1 and 100"
         self.feedback_color = (220, 220, 220)
@@ -37,11 +41,15 @@ class GameEngine:
         self.input_box.clear()
 
         if guess < self.secret_number:
+            self.low_bound = guess + 1
             self.feedback_msg = f"TOO LOW! (Guess was {guess})"
             self.feedback_color = (80, 160, 240)
+
         elif guess > self.secret_number:
+            self.high_bound = guess - 1
             self.feedback_msg = f"TOO HIGH! (Guess was {guess})"
             self.feedback_color = (240, 100, 80)
+
         else:
             self.feedback_msg = f"CORRECT! Found in {self.attempts} attempts."
             self.feedback_color = (80, 220, 90)
@@ -49,6 +57,10 @@ class GameEngine:
 
     def reset(self):
         self.secret_number = random.randint(1, 100)
+
+        self.low_bound = 1
+        self.high_bound = 100
+
         self.attempts = 0
         self.feedback_msg = "Enter a number between 1 and 100"
         self.feedback_color = (220, 220, 220)
@@ -93,6 +105,19 @@ class GameEngine:
             (
                 self.width // 2 - attempts_surf.get_width() // 2,
                 95,
+            ),
+        )
+
+        range_surf = self.font_medium.render(
+            f"Current Possible Range: {self.low_bound} - {self.high_bound}",
+            True,
+            (200, 210, 220),
+        )
+        screen.blit(
+            range_surf,
+            (
+                self.width // 2 - range_surf.get_width() // 2,
+                125,
             ),
         )
 
@@ -149,22 +174,47 @@ class GameEngine:
             )
 ```
 
-### What changed
+### Task 2 changes
 
-Only this block was added before `int()`:
+The changes are intentionally small:
 
-```python
-if not self.input_box.text.strip():
-    self.feedback_msg = "Please enter a valid number."
-    self.feedback_color = (240, 200, 80)
-    return
+* Added:
+
+  ```python
+  self.low_bound = 1
+  self.high_bound = 100
+  ```
+
+* If the guess is too low:
+
+  ```python
+  self.low_bound = guess + 1
+  ```
+
+* If the guess is too high:
+
+  ```python
+  self.high_bound = guess - 1
+  ```
+
+* Added the displayed range:
+
+  ```text
+  Current Possible Range: 24 - 68
+  ```
+
+* `reset()` restores the range to `1 - 100`.
+
+* Empty input is checked **before** `int()`, so it does not increment attempts or change the range.
+
+For example, if the secret number is `68`:
+
+```text
+Initial:       1 - 100
+Guess: 24 LOW  → 25 - 100
+Guess: 80 HIGH → 25 - 79
+Guess: 50 LOW  → 51 - 79
+Guess: 68      → Correct
 ```
 
-So now:
-
-* **Empty input + Enter** → no crash
-* **Empty input + SUBMIT** → no crash
-* **Attempts remain unchanged**
-* Feedback says **"Please enter a valid number."**
-* Non-empty input continues through the existing guessing logic
-* No other features were added.
+This keeps the existing functionality intact while adding the dynamic range hint.
